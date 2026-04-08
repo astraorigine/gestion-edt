@@ -124,9 +124,79 @@ def test_duree_seance():
     print("TEST 5 PASSÉ : Durée séance = 2h OK")
 
 
+
+# ─────────────────────────────────────────
+# TESTS POUR GEDT-02 — Données de test
+# ─────────────────────────────────────────
+
+def test_donnees_de_test_inserees(engine):
+    """
+    TEST 6 : Les données de test existent en BD
+    Vérifie que seed.py a bien fonctionné
+    """
+    from app.models import (
+        Parcours, Semestre, Matiere,
+        Enseignant, TypeMatiere
+    )
+    session = Session(engine)
+
+    try:
+        # Au moins 1 parcours
+        nb_parcours = session.query(Parcours).count()
+        assert nb_parcours >= 1, \
+            "Aucun parcours en BD"
+        print(f"   {nb_parcours} parcours trouvé(s)")
+
+        # Au moins 2 semestres
+        nb_semestres = session.query(Semestre).count()
+        assert nb_semestres >= 2, \
+            "Pas assez de semestres"
+        print(f"   {nb_semestres} semestres trouvé(s)")
+
+        # Au moins 5 matières
+        nb_matieres = session.query(Matiere).count()
+        assert nb_matieres >= 5, \
+            "Pas assez de matières"
+        print(f"   {nb_matieres} matières trouvée(s)")
+
+        # Au moins 3 enseignants
+        nb_ens = session.query(Enseignant).count()
+        assert nb_ens >= 3, \
+            "Pas assez d'enseignants"
+        print(f"   {nb_ens} enseignant(s) trouvé(s)")
+
+        print(" TEST 6 PASSÉ : Données de test OK")
+
+    except AssertionError as e:
+        print(f" TEST 6 ÉCHOUÉ : {e}")
+    finally:
+        session.close()
+
+
+def test_credits_coherents(engine):
+    """
+    TEST 7 : Les crédits des matières
+    sont cohérents (chaque crédit > 0)
+    """
+    from app.models import Matiere
+    session = Session(engine)
+
+    try:
+        matieres = session.query(Matiere).all()
+        for m in matieres:
+            assert m.credit > 0, \
+                f"Crédit invalide pour {m.nom}"
+        print(" TEST 7 PASSÉ : Crédits cohérents OK")
+    except AssertionError as e:
+        print(f" TEST 7 ÉCHOUÉ : {e}")
+    finally:
+        session.close()
+
+
 # ─────────────────────────────────────────
 # LANCEMENT DES TESTS
 # ─────────────────────────────────────────
+
 if __name__ == "__main__":
     print("\n LANCEMENT DES TESTS — GEDT-01")
     print("=" * 40)
@@ -137,8 +207,15 @@ if __name__ == "__main__":
         test_tables_existent(engine)
         test_creation_parcours(engine)
 
+#    TESTS POUR GEDT-02 — Données de test
+        test_donnees_de_test_inserees(engine)
+        test_credits_coherents(engine)
+
     test_regle_credit_journalier()
     test_duree_seance()
 
     print("=" * 40)
     print(" Tests terminés\n")
+
+
+

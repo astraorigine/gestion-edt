@@ -43,8 +43,7 @@ class Parcours(Base):
 
 
 # ─────────────────────────────────────────
-# TABLE : Semestre
-# Ex : Semestre 3, Semestre 4
+# TABLE : Semestre(1,2,3,4,5,6)
 # ─────────────────────────────────────────
 class Semestre(Base):
     __tablename__ = "semestre"
