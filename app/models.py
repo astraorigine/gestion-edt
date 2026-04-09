@@ -171,7 +171,6 @@ class EmploiDuTemps(Base):
 
 # ─────────────────────────────────────────
 # TABLE : Seance
-# duree = 2h (règle fixe)
 # ─────────────────────────────────────────
 class Seance(Base):
     __tablename__ = "seance"
