@@ -63,6 +63,7 @@ def inserer_donnees():
         # 3. TYPES DE MATIÈRES (colorimétrie)
         # ─────────────────────────────────
         print("-> Insertion des types de matières...")
+
         type_bleu  = TypeMatiere(
             libelle="Transversale",
             couleur="bleu"
@@ -75,10 +76,18 @@ def inserer_donnees():
             libelle="Anticipée",
             couleur="jaune"
         )
+        type_noir  = TypeMatiere(
+            libelle="Cours standard",
+            couleur="noir"
+        )
         session.add_all([
-            type_bleu, type_rouge, type_jaune
+            type_bleu,
+            type_rouge,
+            type_jaune,
+            type_noir
         ])
         session.flush()
+        print("→ 4 types de matières créés")
 
         # ─────────────────────────────────
         # 4. MATIÈRES
@@ -131,13 +140,25 @@ def inserer_donnees():
             Matiere(nom="Géométrie 1", credit=2.0, semestre_id=semestre_1.id, type_id=type_bleu.id),
             Matiere(nom="Comptabilité", credit=2.0, semestre_id=semestre_1.id, type_id=type_bleu.id),
             Matiere(nom="Techniques de management", credit=2.0, semestre_id=semestre_1.id, type_id=type_bleu.id),
-            Matiere(nom="TEF", credit=2.0, semestre_id=semestre_1.id, type_id=type_bleu.id),
-            Matiere(nom="Chimie", credit=2.0, semestre_id=semestre_1.id, type_id=type_bleu.id),
+            Matiere(nom="TEF", credit=2.0, semestre_id=semestre_1.id, type_id=type_noir.id),
+            Matiere(nom="Chimie", credit=2.0, semestre_id=semestre_1.id, type_id=type_noir.id),
             Matiere(nom="Probabilité et Statistiques", credit=2.0, semestre_id=semestre_1.id, type_id=type_bleu.id),
             Matiere(nom="Logique de programmation", credit=2.0, semestre_id=semestre_1.id, type_id=type_bleu.id),
-            Matiere(nom="Mécanique", credit=2.0, semestre_id=semestre_1.id, type_id=type_bleu.id),
-            Matiere(nom="Optique", credit=2.0, semestre_id=semestre_1.id, type_id=type_bleu.id),
-            Matiere(nom="Pollution", credit=2.0, semestre_id=semestre_1.id, type_id=type_bleu.id),
+            Matiere(nom="Mécanique", credit=2.0, semestre_id=semestre_1.id, type_id=type_noir.id),
+            Matiere(nom="Optique", credit=2.0, semestre_id=semestre_1.id, type_id=type_noir.id),
+            Matiere(nom="Pollution", credit=2.0, semestre_id=semestre_1.id, type_id=type_noir.id),
+            Matiere(
+                nom        ="Gestion de projet",
+                credit     =1.5,
+                semestre_id=semestre_3.id,
+                type_id    =type_noir.id
+            ),
+             Matiere(
+                nom        ="Communication",
+                credit     =1.5,
+                semestre_id=semestre_3.id,
+                type_id    =type_noir.id
+            ),
         ]
         session.add_all(matieres)
         session.flush()

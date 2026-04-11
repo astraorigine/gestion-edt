@@ -80,7 +80,7 @@ class TypeMatiere(Base):
                      autoincrement=True)
     libelle = Column(String(50),  nullable=False)
     couleur = Column(
-        Enum("bleu", "rouge", "jaune",
+        Enum("bleu", "rouge", "jaune","noir",
              name="couleur_enum"),
         nullable=False
     )
