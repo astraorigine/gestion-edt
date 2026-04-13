@@ -137,6 +137,43 @@ class Enseignant(Base):
 
     def __repr__(self):
         return f"<Enseignant {self.nom} {self.prenom}>"
+    
+
+# ─────────────────────────────────────────
+# TABLE : EnseignantMatiere
+# ─────────────────────────────────────────
+"""
+ Lien entre enseignant et matière(s)
+ Un enseignant peut enseigner plusieurs matières, une matière peut être enseignée
+ par plusieurs enseignants
+"""
+class EnseignantMatiere(Base):
+    __tablename__ = "enseignant_matiere"
+
+    id            = Column(
+        Integer, primary_key=True,
+        autoincrement=True
+    )
+    enseignant_id = Column(
+        Integer,
+        ForeignKey("enseignant.id"),
+        nullable=False
+    )
+    matiere_id    = Column(
+        Integer,
+        ForeignKey("matiere.id"),
+        nullable=False
+    )
+
+    enseignant = relationship("Enseignant")
+    matiere    = relationship("Matiere")
+
+    def __repr__(self):
+        return (
+            f"<EnseignantMatiere "
+            f"ens={self.enseignant_id} "
+            f"mat={self.matiere_id}>"
+        )
 
 
 # ─────────────────────────────────────────

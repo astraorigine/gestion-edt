@@ -9,7 +9,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from app.models import (
     Base, Parcours, Semestre,
-    TypeMatiere, Matiere, Enseignant
+    TypeMatiere, Matiere, Enseignant,
+    EnseignantMatiere              
 )
 from config import DATABASE_URL
 
@@ -430,6 +431,100 @@ def inserer_donnees():
         ]
 
         session.add_all(enseignants)
+        session.flush()
+        print(f"  {len(enseignants)} enseignants créés")
+
+        # ─────────────────────────────────
+        # 6. AFFECTATIONS ENSEIGNANT ↔ MATIÈRE
+        # On associe chaque enseignant
+        # à ses matières
+        # ─────────────────────────────────
+        print("→ Affectation enseignants...")
+
+        # Construire un index pour retrouver facilement par nom
+        idx_ens = {
+            e.nom: e for e in enseignants
+        }
+        idx_mat = {
+            m.nom: m for m in matieres
+        }
+
+        affectations_data = [
+            # (nom_enseignant, nom_matiere)
+            ("BATANGOUNA", "Algorithmique"),
+            ("BATANGOUNA", "Logique de prog."),
+            ("BENAZO",     "Base de données"),
+            ("BENAZO",     "Programmation Web"),
+            ("EPOUNDA",    "Analyse 1"),
+            ("EPOUNDA",    "Mathématiques"),
+            ("MONGONDZA",  "Gestion de projet"),
+            ("MONGONDZA",  "Communication"),
+            ("MAVOUNGOU",  "Systèmes d'info."),
+            ("MAVOUNGOU",  "Machine Learning"),
+            ("EKIAYE",     "TEF"),
+            ("EKIAYE",     "Société et Culture"),
+            ("MALONGA",    "Algèbre 1"),
+            ("MALONGA",    "Architecture logicielle"),
+            ("M'BAYA",     "Web et Réseaux"),
+            ("M'BAYA",     "Web et Réseaux"),
+            ("SAH",        "TP Python Data"),
+            ("SAH",        "TP Informatique"),
+            ("ZABAKANI",   "TP Statistiques"),
+            ("ZABAKANI",   "TP Programmation"),
+            ("MIAKAYIZILA","Data Visualisation"),
+            ("KENDE",      "Probabilités"),
+            ("KENDE",      "Probabilités avancées"),
+            ("MIZELE",     "Comptabilité"),
+            ("MFOUTOU",    "Techniques de Mgmt"),
+            ("MANKOU",     "Génie Mécanique"),
+            ("MANKOU",     "Physique"),
+            ("GAMPIKA",    "UML avancé"),
+            ("GAMPIKA",    "TP Développement"),
+            ("MABIALA",    "Électricité"),
+            ("MABIALA",    "Chimie"),
+        ]
+
+        affectations = []
+        nb_ok  = 0
+        nb_ko  = 0
+
+        for nom_ens, nom_mat in affectations_data:
+            ens = idx_ens.get(nom_ens)
+            mat = idx_mat.get(nom_mat)
+
+            if not ens:
+                print(
+                    f"    Enseignant introuvable "
+                    f": {nom_ens}"
+                )
+                nb_ko += 1
+                continue
+
+            if not mat:
+                print(
+                    f"    Matière introuvable "
+                    f": {nom_mat}"
+                )
+                nb_ko += 1
+                continue
+
+            affectations.append(
+                EnseignantMatiere(
+                    enseignant_id=ens.id,
+                    matiere_id   =mat.id
+                )
+            )
+            nb_ok += 1
+
+        session.add_all(affectations)
+        print(
+            f"   {nb_ok} affectations créées"
+        )
+        if nb_ko > 0:
+            print(
+                f"   {nb_ko} affectations "
+                f"non trouvées"
+            )
         session.commit()
 
         print(f"\n Toutes les données insérées !")

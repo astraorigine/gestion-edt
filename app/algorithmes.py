@@ -11,7 +11,7 @@ sys.path.insert(0, os.path.dirname(
 ))
 from datetime import date, timedelta
 from app.models import (
-    Matiere, Semestre, Parcours,
+    Enseignant, Matiere, Semestre, Parcours,
     EmploiDuTemps, Seance
 )
 
@@ -826,6 +826,206 @@ def sauvegarder_en_bd(
 
     return edt
 
+# ═════════════════════════════════════════
+# GEDT-04 — ASSIGNATION DES ENSEIGNANTS
+# ═════════════════════════════════════════
+
+def assigner_enseignants(
+    session,
+    emploi_du_temps_id
+):
+    """
+    Assigne automatiquement chaque enseignant
+    à sa séance selon la table
+    enseignant_matiere.
+
+    Pour chaque séance de l'ET :
+      1. On trouve la matière
+      2. On cherche l'enseignant affecté
+         à cette matière dans
+         enseignant_matiere
+      3. On vérifie qu'il n'a pas
+         de conflit horaire ce jour-là
+      4. On l'assigne à la séance
+
+    Paramètres :
+      session            : SQLAlchemy session
+      emploi_du_temps_id : int
+
+    Retourne :
+      nb_assignées  (int) : séances assignées
+      nb_conflits   (int) : conflits détectés
+      conflits      (list): détail des conflits
+    """
+    from app.models import EnseignantMatiere
+
+    # ── Récupérer toutes les séances de l'ET
+    seances = session.query(Seance).filter_by(
+        emploi_du_temps_id=emploi_du_temps_id
+    ).all()
+
+    if not seances:
+        print(" Aucune séance trouvée pour cet ET.")
+        return 0, 0, []
+
+    print(
+        f"\n Assignation des enseignants..."
+        f" ({len(seances)} séances)"
+    )
+    print("-" * 50)
+
+    nb_assignées = 0
+    nb_conflits  = 0
+    conflits     = []
+
+    # ── Construire un registre des
+    #    créneaux déjà occupés par enseignant
+    # Structure :
+    # {enseignant_id: [(jour, heure_debut)]}
+    emploi_enseignant = {}
+
+    for seance in seances:
+
+        # ── 1. Trouver l'enseignant
+        #       pour cette matière
+        affectation = session.query(
+            EnseignantMatiere
+        ).filter_by(
+            matiere_id=seance.matiere_id
+        ).first()
+
+        if not affectation:
+            print(
+                f"    Aucun enseignant affecté "
+                f"à la matière id="
+                f"{seance.matiere_id}"
+            )
+            nb_conflits += 1
+            conflits.append({
+                "type"   : "non_affecté",
+                "seance" : seance.id,
+                "matiere": seance.matiere_id
+            })
+            continue
+
+        ens_id = affectation.enseignant_id
+
+        # ── 2. Vérifier conflit horaire
+        if ens_id not in emploi_enseignant:
+            emploi_enseignant[ens_id] = []
+
+        creneau_actuel = (
+            seance.jour,
+            seance.heure_debut
+        )
+
+        if creneau_actuel in emploi_enseignant[ens_id]:
+            # CONFLIT : enseignant déjà occupé
+            # On cherche un remplaçant
+            remplacant = _trouver_remplacant(
+                session,
+                seance.matiere_id,
+                creneau_actuel,
+                emploi_enseignant
+            )
+
+            if remplacant:
+                ens_id = remplacant.id
+                print(
+                    f"   Conflit résolu : "
+                    f"remplaçant trouvé "
+                    f"pour séance {seance.id}"
+                )
+            else:
+                print(
+                    f"   Conflit non résolu : "
+                    f"séance {seance.id} — "
+                    f"aucun remplaçant disponible"
+                )
+                nb_conflits += 1
+                conflits.append({
+                    "type"      : "conflit",
+                    "seance"    : seance.id,
+                    "enseignant": ens_id,
+                    "jour"      : seance.jour,
+                    "heure"     : str(seance.heure_debut)
+                })
+                continue
+
+        # ── 3. Assigner l'enseignant
+        seance.enseignant_id = ens_id
+        emploi_enseignant[ens_id].append(
+            creneau_actuel
+        )
+        nb_assignées += 1
+
+        # Récupérer le nom pour l'affichage
+        ens_obj = session.query(
+            Enseignant
+        ).filter_by(id=ens_id).first()
+
+        matiere_obj = session.query(
+            Matiere
+        ).filter_by(id=seance.matiere_id).first()
+
+        print(
+            f"   {matiere_obj.nom:30s}"
+            f" → {ens_obj.grade} "
+            f"{ens_obj.nom}"
+            f" ({seance.jour})"
+        )
+
+    # ── 4. Commit
+    session.commit()
+
+    print(
+        f"\n Résultat assignation :"
+        f"\n   {nb_assignées} séances assignées"
+        f"\n   {nb_conflits} conflits"
+    )
+
+    return nb_assignées, nb_conflits, conflits
+
+
+def _trouver_remplacant(
+    session,
+    matiere_id,
+    creneau_actuel,
+    emploi_enseignant
+):
+    """
+    Cherche un autre enseignant
+    pouvant remplacer sur cette matière
+    sans conflit horaire.
+
+    Retourne :
+      Enseignant disponible ou None
+    """
+    from app.models import EnseignantMatiere
+
+    # Tous les enseignants pour cette matière
+    toutes_affectations = session.query(
+        EnseignantMatiere
+    ).filter_by(
+        matiere_id=matiere_id
+    ).all()
+
+    for affectation in toutes_affectations:
+        ens_id = affectation.enseignant_id
+
+        creneaux_ens = emploi_enseignant.get(
+            ens_id, []
+        )
+
+        # Cet enseignant est-il libre ?
+        if creneau_actuel not in creneaux_ens:
+            return session.query(
+                Enseignant
+            ).filter_by(id=ens_id).first()
+
+    return None
+
+
 
 
 
@@ -924,8 +1124,28 @@ if __name__ == "__main__":
                 "L'ET existe seulement "
                 "en mémoire."
             )
+        # 9. Assigner les enseignants (GEDT-04)
+        if reponse == "o":
+            print(
+                "\n→ Lancement de l'assignation"
+                " des enseignants..."
+            )
+            nb_ok, nb_conf, conflits = (
+                assigner_enseignants(
+                    session,
+                    edt.id
+                )
+            )
 
-        # 9. Résumé
+            if nb_conf > 0:
+                print(
+                    f"\n  {nb_conf} conflit(s) "
+                    f"détecté(s) :"
+                )
+                for c in conflits:
+                    print(f"   → {c}")
+
+        # 10. Résumé
         if non_ass:
             print(
                 f"\n  Matières non assignées "
