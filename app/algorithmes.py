@@ -4,9 +4,13 @@
 # Projet : Gestion EDT — Méthode XP
 # Itération 2 — GEDT-03
 # ─────────────────────────────────────────
-
+import sys
+import os
+sys.path.insert(0, os.path.dirname(
+    os.path.dirname(os.path.abspath(__file__))
+))
 from datetime import date, timedelta
-from models import (
+from app.models import (
     Matiere, Semestre, Parcours,
     EmploiDuTemps, Seance
 )
@@ -190,11 +194,15 @@ def selectionner_date_debut():
                 "\n→ Date de début (JJ/MM/AAAA) : "
             ).strip()
             jour, mois, annee = saisie.split("/")
-            d = date(
-                int(annee),
-                int(mois),
-                int(jour)
-            )
+            d = date(int(annee), int(mois), int(jour))
+
+            if d < date.today():
+                print(
+                    " La date ne peut pas être "
+                    "dans le passé."
+                )
+                continue
+
             print(f" Date de début : {d}")
             return d
         except (ValueError, TypeError):
@@ -418,9 +426,9 @@ def trier_matieres_par_priorite(matieres):
 
 def valider_credit_journalier(total_credits):
     """
-    R₁ : Somme crédits/jour ≥ 3 et ≤ 5
+    R₁ : Somme crédits/jour ≥ 3 et ≤ 6
     """
-    return 3.0 <= total_credits <= 5.0
+    return 3.0 <= total_credits <= 6.0
 
 
 def créneau_est_libre(planning, date_str, idx):
@@ -505,7 +513,7 @@ def assigner_matieres(
         creneaux = generer_creneaux(
             heure_debut, heure_fin, max_mat
         )
-    
+
         planning[date_str] = {
             "nom_jour" : nom_jour,
             "creneaux" : [None] * max_mat,
@@ -551,8 +559,13 @@ def assigner_matieres(
                 continue
 
             # Vérifier limite crédit R₁
-            if nouveau_total > 5.0:
-                continue
+
+            if nouveau_total > 6.0:
+
+                if credit_jour[date_str] == 0.0:
+                    pass  # on continue l'assignation
+                else:
+                    continue  # jour trop chargé
 
             # Trouver créneau libre
             idx_libre = None
@@ -663,19 +676,26 @@ def afficher_planning(
                     f"{matiere}"
                 )
 
-                # Afficher la pause après
+                # APRÈS — pause seulement si le créneau
+                #          suivant a une matière
                 if idx == 0 and max_mat >= 2:
-                    c2_debut = horaires[1][0]
-                    print(
-                        f"    Pause 1h    "
-                        f"({fin} → {c2_debut})"
-                    )
+                    # Vérifier que la séance 2 existe
+                    if (len(creneaux) > 1
+                            and creneaux[1] is not None):
+                        c2_debut = horaires[1][0]
+                        print(
+                            f"     Pause 1h    "
+                            f"({fin} → {c2_debut})"
+                        )
                 elif idx == 1 and max_mat == 3:
-                    c3_debut = horaires[2][0]
-                    print(
-                        f"    Pause 45min "
-                        f"({fin} → {c3_debut})"
-                    )
+                    # Vérifier que la séance 3 existe
+                    if (len(creneaux) > 2
+                            and creneaux[2] is not None):
+                        c3_debut = horaires[2][0]
+                        print(
+                            f"     Pause 45min "
+                            f"({fin} → {c3_debut})"
+                        )
 
     print("\n" + "=" * 60)
     print("  LÉGENDE :")
@@ -687,6 +707,126 @@ def afficher_planning(
     print("  [noir]  = Cours standard")
     print("  [rouge] = TP")
     print("=" * 60)
+
+
+# ═════════════════════════════════════════
+# SAUVEGARDE EN BASE DE DONNÉES
+# ═════════════════════════════════════════
+
+def sauvegarder_en_bd(
+    session,
+    planning,
+    matieres,
+    parcours_id,
+    semestre_id,
+    type_session,
+    date_debut
+):
+    """
+    Sauvegarde le planning généré
+    dans les tables EmploiDuTemps
+    et Seance de PostgreSQL.
+
+    Paramètres :
+      session      : session SQLAlchemy
+      planning     : dict du planning
+      matieres     : liste objets Matiere
+      parcours_id  : int
+      semestre_id  : int
+      type_session : "ordinaire" ou
+                     "rattrapage"
+      date_debut   : date Python
+
+    Retourne :
+      edt : objet EmploiDuTemps créé
+    """
+    from datetime import time as dt_time
+
+    # ── 1. Créer l'EmploiDuTemps ──────────
+    edt = EmploiDuTemps(
+        session     =type_session,
+        date_debut  =date_debut,
+        parcours_id =parcours_id,
+        semestre_id =semestre_id
+    )
+    session.add(edt)
+    session.flush()
+    # flush() pour récupérer edt.id
+
+    print(
+        f"\n Sauvegarde en BD..."
+        f" (EmploiDuTemps id={edt.id})"
+    )
+
+    # ── Construire un index matières ──────
+    # Pour retrouver une matière par son nom
+    index_matieres = {
+        m.nom: m for m in matieres
+    }
+
+    # ── 2. Créer les Séances ──────────────
+    nb_seances = 0
+
+    for date_str, jour_info in planning.items():
+        creneaux = jour_info["creneaux"]
+        horaires = jour_info["horaires"]
+        nom_jour = jour_info["nom_jour"]
+
+        for idx, matiere_etiquette in enumerate(
+            creneaux
+        ):
+            if matiere_etiquette is None:
+                continue
+
+            # Extraire le nom de la matière
+            # "Algorithmique [bleu]" → "Algorithmique"
+            nom_matiere = matiere_etiquette.split(
+                " ["
+            )[0]
+
+            # Retrouver l'objet Matiere
+            matiere_obj = index_matieres.get(
+                nom_matiere
+            )
+            if not matiere_obj:
+                print(
+                    f"   Matière introuvable "
+                    f": {nom_matiere}"
+                )
+                continue
+
+            # Convertir heure en objet time
+            # "09h00" → time(9, 0)
+            heure_str = horaires[idx][0]
+            h = int(heure_str[:2])
+            m = int(heure_str[3:5])
+            heure_obj = dt_time(h, m)
+
+            # Créer la séance
+            # enseignant_id = None pour l'instant
+            # (sera rempli par GEDT-04)
+            seance = Seance(
+                jour              =nom_jour,
+                heure_debut       =heure_obj,
+                duree             =2,
+                matiere_id        =matiere_obj.id,
+                enseignant_id     =1,
+                emploi_du_temps_id=edt.id
+            )
+            session.add(seance)
+            nb_seances += 1
+
+    # ── 3. Commit final ───────────────────
+    session.commit()
+
+    print(
+        f"   {nb_seances} séances "
+        f"sauvegardées en BD"
+    )
+
+    return edt
+
+
 
 
 # ═════════════════════════════════════════
@@ -759,7 +899,33 @@ if __name__ == "__main__":
             type_session
         )
 
-        # 8. Résumé
+        # 8. Sauvegarder en BD
+        reponse = input(
+            "\n→ Sauvegarder en BD ? (o/n) : "
+        ).strip().lower()
+
+        if reponse == "o":
+            edt = sauvegarder_en_bd(
+                session     =session,
+                planning    =planning,
+                matieres    =matieres,
+                parcours_id =parcours.id,
+                semestre_id =semestre.id,
+                type_session=type_session,
+                date_debut  =date_debut
+            )
+            print(
+                f"\n Emploi du temps "
+                f"sauvegardé ! (id={edt.id})"
+            )
+        else:
+            print(
+                "\n  Non sauvegardé. "
+                "L'ET existe seulement "
+                "en mémoire."
+            )
+
+        # 9. Résumé
         if non_ass:
             print(
                 f"\n  Matières non assignées "
@@ -781,6 +947,7 @@ if __name__ == "__main__":
             f"\n Durée de la session : "
             f"{total_jours} jour(s)"
         )
+        
 
     finally:
         session.close()
