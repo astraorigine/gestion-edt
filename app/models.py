@@ -183,28 +183,66 @@ class EnseignantMatiere(Base):
 class EmploiDuTemps(Base):
     __tablename__ = "emploi_du_temps"
 
-    id          = Column(Integer, primary_key=True,
-                         autoincrement=True)
-    session     = Column(
+    id               = Column(
+        Integer,
+        primary_key=True,
+        autoincrement=True
+    )
+    session          = Column(
         Enum("ordinaire", "rattrapage",
              name="session_enum"),
         nullable=False
     )
-    date_debut  = Column(Date, nullable=False)
-    parcours_id = Column(Integer,
-                         ForeignKey("parcours.id"),
-                         nullable=False)
-    semestre_id = Column(Integer,
-                         ForeignKey("semestre.id"),
-                         nullable=False)
+    date_debut       = Column(
+        Date,
+        nullable=False
+    )
+    parcours_id      = Column(
+        Integer,
+        ForeignKey("parcours.id"),
+        nullable=False
+    )
+    semestre_id      = Column(
+        Integer,
+        ForeignKey("semestre.id"),
+        nullable=False
+    )
+
+    # ── Champs nécessaires pour le GEDT-05 ───────────────────
+    publie           = Column(
+        Integer,
+        default=0,
+        nullable=False
+    )
+    # 0 = non publié, 1 = publié
+
+    date_publication = Column(
+        Date,
+        nullable=True
+    )
+    # None tant que non publié
+
+    archive          = Column(
+        Integer,
+        default=0,
+        nullable=False
+    )
+    # 0 = actif, 1 = archivé
 
     seances = relationship(
-        "Seance", back_populates="emploi_du_temps"
+        "Seance",
+        back_populates="emploi_du_temps"
     )
 
     def __repr__(self):
-        return f"<EmploiDuTemps {self.session}>"
-
+        statut = (
+            "publié"  if self.publie  == 1
+            else "brouillon"
+        )
+        return (
+            f"<EmploiDuTemps "
+            f"{self.session} — {statut}>"
+        )
 
 # ─────────────────────────────────────────
 # TABLE : Seance
