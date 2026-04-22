@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block titre %}Détail ET #{{ edt.id }}{% endblock %}
+
+{% block page_titre %}
+    📋 Emploi du Temps #{{ edt.id }}
+    — {{ edt.session | capitalize }}
+{% endblock %}
+
+{% block contenu %}
+
+<!-- Informations générales -->
+<div class="card">
+    <div class="info-grille">
+        <div class="info-item">
+            <span class="info-label">Parcours</span>
+            <span class="info-valeur">
+                {{ parcours_nom }}
+            </span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Semestre</span>
+            <span class="info-valeur">
+                Semestre {{ semestre_num }}
+            </span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Session</span>
+            <span class="info-valeur">
+                {{ edt.session | capitalize }}
+            </span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Début</span>
+            <span class="info-valeur">
+                {{ edt.date_debut }}
+            </span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Statut</span>
+            <span class="info-valeur">
+                {% if edt.publie == 1 %}
+                     Publié le {{ edt.date_publication }}
+                {% else %}
+                     Brouillon (non publié)
+                {% endif %}
+            </span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Archive</span>
+            <span class="info-valeur">
+                {% if edt.archive == 1 %}
+                    🔒 Archivé
+                {% else %}
+                    🟢 Actif
+                {% endif %}
+            </span>
+        </div>
+    </div>
+</div>
+
+<!-- Séances par jour -->
+{% if seances_dict %}
+<div class="card">
+    <div class="card-titre">
+        Planning des séances
+        ({{ total_seances }} séances)
+    </div>
+
+    {% for jour, seances in seances_dict.items() %}
+    <div class="jour-block">
+        <h3 class="jour-titre">
+             {{ jour | upper }}
+        </h3>
+        <table class="tableau">
+            <thead>
+                <tr>
+                    <th>Horaire</th>
+                    <th>Durée</th>
+                    <th>Matière</th>
+                    <th>Type</th>
+                    <th>Enseignant</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in seances %}
+                <tr>
+                    <td>
+                        {{ s.heure | string | truncate(5, true, '') }}
+                    </td>
+                    <td>{{ s.duree }}h</td>
+                    <td>
+                        <strong>{{ s.matiere.nom }}</strong>
+                    </td>
+                    <td>
+                        <span class="badge-{{ s.matiere.type.couleur }}">
+                            {{ s.matiere.type.couleur }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if s.enseignant %}
+                            {{ s.enseignant.grade }}
+                            {{ s.enseignant.nom }}
+                            {{ s.enseignant.prenom }}
+                        {% else %}
+                            <span class="texte-mute">
+                                Non assigné
+                            </span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endfor %}
+</div>
+
+{% else %}
+<div class="card">
+    <p class="texte-mute">
+         Aucune séance pour cet
+        emploi du temps.
+    </p>
+</div>
+{% endif %}
+
+<!-- Actions -->
+<div class="card">
+    <div class="action-groupe">
+        <a href="{{ url_for('main.gestion') }}"
+           class="btn btn-secondaire">
+            ← Retour
+        </a>
+        {% if edt.publie == 0 and edt.archive == 0 %}
+        <form method="POST"
+              action="{{ url_for('main.publication') }}">
+            <input type="hidden"
+                   name="edt_id"
+                   value="{{ edt.id }}">
+            <button type="submit"
+                    class="btn btn-succes">
+                 Publier cet emploi du temps
+            </button>
+        </form>
+        {% endif %}
+        {% if edt.publie == 1 %}
+        <a href="{{ url_for('main.export_excel',
+                  edt_id=edt.id) }}"
+           class="btn btn-succes">
+             Exporter Excel
+        </a>
+        <a href="{{ url_for('main.export_pdf',
+                  edt_id=edt.id) }}"
+           class="btn btn-danger">
+             Exporter PDF
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

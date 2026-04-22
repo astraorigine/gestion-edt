@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+
+{% block titre %}Consultation{% endblock %}
+
+{% block page_titre %}
+     Consulter un Emploi du Temps
+{% endblock %}
+
+{% block contenu %}
+
+<!-- Formulaire de filtrage -->
+<div class="card">
+    <div class="card-titre">
+        Rechercher un emploi du temps publié
+    </div>
+    <form method="POST">
+
+        <div class="form-row">
+
+            <div class="form-group">
+                <label>Parcours</label>
+                <select name="parcours_id"
+                        id="parcours_id"
+                        onchange="charger_semestres()"
+                        required>
+                    <option value="">
+                        -- Choisir un parcours --
+                    </option>
+                    {% for p in parcours_list %}
+                    <option value="{{ p.id }}"
+                        {% if selected_parcours == p.id %}
+                        selected
+                        {% endif %}>
+                        {{ p.nom }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Semestre</label>
+                <select name="semestre_id"
+                        id="semestre_id"
+                        required>
+                    <option value="">
+                        -- Choisir d'abord un parcours --
+                    </option>
+                    {% if semestres_list %}
+                    {% for s in semestres_list %}
+                    <option value="{{ s.id }}"
+                        {% if selected_semestre == s.id %}
+                        selected
+                        {% endif %}>
+                        Semestre {{ s.numero }}
+                    </option>
+                    {% endfor %}
+                    {% endif %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Type de session</label>
+                <select name="type_session">
+                    <option value="ordinaire"
+                        {% if selected_session == 'ordinaire' %}
+                        selected{% endif %}>
+                        Session Ordinaire
+                    </option>
+                    <option value="rattrapage"
+                        {% if selected_session == 'rattrapage' %}
+                        selected{% endif %}>
+                        Session de Rattrapage
+                    </option>
+                </select>
+            </div>
+
+        </div>
+
+        <button type="submit"
+                class="btn btn-primaire">
+             Rechercher
+        </button>
+
+    </form>
+</div>
+
+<!-- Message si aucun résultat -->
+{% if searched and not et_result %}
+<div class="card">
+    <div class="vide-message">
+        <div class="vide-icon">🔍</div>
+        <h3>Aucun emploi du temps publié
+            trouvé</h3>
+        <p>
+            L'emploi du temps de cette session
+            n'est pas encore disponible ou
+            n'existe pas pour ces critères.
+        </p>
+        {% if is_cd %}
+        <a href="{{ url_for('main.creation') }}"
+           class="btn btn-primaire">
+          Créer cet emploi du temps
+        </a>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Résultat trouvé -->
+{% if et_result %}
+<div class="card">
+    <div class="card-titre">
+        Emploi du temps —
+        {{ et_result.session | upper }}
+        {% if et_result.date_publication %}
+        | Publié le : {{ et_result.date_publication }}
+        {% endif %}
+    </div>
+
+    {% if seances_dict %}
+    {% for jour, seances in seances_dict.items() %}
+    <div class="jour-block">
+        <h3 class="jour-titre">
+             {{ jour | upper }}
+        </h3>
+        <table class="tableau">
+            <thead>
+                <tr>
+                    <th>Horaire</th>
+                    <th>Matière</th>
+                    <th>Type</th>
+                    <th>Enseignant</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in seances %}
+                <tr>
+                    <td>
+                        {{ s.heure | string
+                           | truncate(5, true, '') }}
+                        → {{ s.duree }}h
+                    </td>
+                    <td>
+                        <strong>
+                            {{ s.matiere.nom }}
+                        </strong>
+                    </td>
+                    <td>
+                        <span class="badge-{{ s.matiere.type.couleur }}">
+                            {{ s.matiere.type.libelle }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if s.enseignant %}
+                            {{ s.enseignant.grade }}
+                            {{ s.enseignant.nom }}
+                        {% else %}
+                            <span class="texte-mute">
+                                Non assigné
+                            </span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endfor %}
+
+    <!-- Export -->
+    <div class="export-zone">
+        <a href="{{ url_for('main.export_excel',
+                  edt_id=et_result.id) }}"
+           class="btn btn-succes">
+            Exporter Excel
+        </a>
+        <a href="{{ url_for('main.export_pdf',
+                  edt_id=et_result.id) }}"
+           class="btn btn-danger">
+             Exporter PDF
+        </a>
+    </div>
+
+    {% else %}
+    <p class="texte-mute">
+         Cet emploi du temps n'a
+        pas encore de séances.
+    </p>
+    {% endif %}
+
+</div>
+{% endif %}
+
+<script>
+function charger_semestres() {
+    const parcours_id = document
+        .getElementById("parcours_id").value;
+    const select_sem = document
+        .getElementById("semestre_id");
+
+    if (!parcours_id) {
+        select_sem.innerHTML =
+            '<option value="">-- Choisir un parcours --</option>';
+        return;
+    }
+
+    fetch(`/api/semestres/${parcours_id}`)
+        .then(r => r.json())
+        .then(data => {
+            select_sem.innerHTML =
+                '<option value="">-- Semestre --</option>';
+            data.forEach(s => {
+                select_sem.innerHTML +=
+                    `<option value="${s.id}">
+                        Semestre ${s.numero}
+                    </option>`;
+            });
+        });
+}
+</script>
+
+{% endblock %}

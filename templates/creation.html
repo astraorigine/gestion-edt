@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block titre %}Créer un ET{% endblock %}
+
+{% block page_titre %}
+     Créer un Emploi du Temps
+{% endblock %}
+
+{% block contenu %}
+
+<div class="card">
+    <div class="card-titre">
+        Paramètres de la session
+    </div>
+
+    <form method="POST">
+
+        <div class="form-group">
+            <label>Parcours</label>
+            <select name="parcours_id"
+                    id="parcours_id"
+                    onchange="charger_semestres()"
+                    required>
+                <option value="">
+                    -- Choisir un parcours --
+                </option>
+                {% for p in parcours_list %}
+                <option value="{{ p.id }}">
+                    {{ p.nom }} ({{ p.niveau }})
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Semestre</label>
+            <select name="semestre_id"
+                    id="semestre_id"
+                    required>
+                <option value="">
+                    -- Choisir d'abord un parcours --
+                </option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Type de session</label>
+            <select name="type_session" required>
+                <option value="ordinaire">
+                    Session Ordinaire
+                </option>
+                <option value="rattrapage">
+                    Session de Rattrapage
+                </option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Date de début</label>
+            <input type="date"
+                   name="date_debut"
+                   min="{{ today }}"
+                   required>
+        </div>
+
+        <div class="form-group">
+            <label>Heure de début (défaut : 9h)</label>
+            <select name="heure_debut">
+                <option value="8">08h00</option>
+                <option value="9" selected>
+                    09h00
+                </option>
+                <option value="10">10h00</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>
+                Jours exceptionnels
+                (3 épreuves autorisées)
+            </label>
+            <div class="checkbox-group">
+                {% for jour in ["Lundi","Mardi",
+                   "Mercredi","Jeudi",
+                   "Vendredi","Samedi"] %}
+                <label class="checkbox-label">
+                    <input type="checkbox"
+                           name="jours_exceptionnels"
+                           value="{{ jour }}">
+                    {{ jour }}
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <button type="submit"
+                class="btn btn-primaire">
+             Générer l'emploi du temps
+        </button>
+
+    </form>
+</div>
+
+<!-- JavaScript pour charger
+     les semestres dynamiquement -->
+<script>
+function charger_semestres() {
+    const parcours_id = document
+        .getElementById("parcours_id").value;
+    const select_sem  = document
+        .getElementById("semestre_id");
+
+    if (!parcours_id) return;
+
+    fetch(`/api/semestres/${parcours_id}`)
+        .then(r => r.json())
+        .then(data => {
+            select_sem.innerHTML =
+                '<option value="">-- Semestre --</option>';
+            data.forEach(s => {
+                select_sem.innerHTML +=
+                    `<option value="${s.id}">
+                        Semestre ${s.numero}
+                    </option>`;
+            });
+        });
+}
+</script>
+
+{% endblock %}

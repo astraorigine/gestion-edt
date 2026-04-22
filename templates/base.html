@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width,
+                   initial-scale=1.0">
+    <title>
+        Gestion EDT —
+        {% block titre %}Accueil{% endblock %}
+    </title>
+    <link rel="stylesheet"
+          href="{{ url_for('static',
+                 filename='style.css') }}">
+</head>
+
+<body>
+
+    <!-- ═══ BARRE DE NAVIGATION ═══ -->
+    <nav class="navbar">
+        <div class="navbar-brand">
+             Gestion des Emplois du Temps
+        </div>
+        <div class="navbar-links">
+            <a href="{{ url_for('main.index') }}"
+               class="nav-link">
+                 Accueil
+            </a>
+            <a href="{{ url_for('main.creation') }}"
+               class="nav-link">
+             Créer un EDT
+            </a>
+            <a href="{{ url_for('main.publication') }}"
+               class="nav-link">
+                 Publier
+            </a>
+            <a href="{{ url_for('main.gestion') }}"
+               class="nav-link">
+                ⚙️ Gérer
+            </a>
+            <a href="{{ url_for('main.consultation') }}"
+               class="nav-link">
+                 Consulter
+            </a>
+        </div>
+    </nav>
+
+    <!-- ═══ MESSAGES FLASH ═══ -->
+    {% with messages = get_flashed_messages(
+        with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- ═══ CONTENU PRINCIPAL ═══ -->
+    <main class="container">
+        <h1 class="page-title">
+            {% block page_titre %}{% endblock %}
+        </h1>
+
+        {% block contenu %}
+        {% endblock %}
+    </main>
+
+    <!-- ═══ PIED DE PAGE ═══ -->
+    <footer class="footer">
+        <p>
+            Université Denis Sassou N'Guesso
+            | Licence II | 2025–2026
+        </p>
+    </footer>
+
+</body>
+</html>

@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block titre %}Accueil{% endblock %}
+
+{% block page_titre %}
+    🏠 Tableau de bord
+{% endblock %}
+
+{% block contenu %}
+
+<div class="stats-grille">
+
+    <div class="card stat-card">
+        <div class="stat-nombre">{{ nb_parcours }}</div>
+        <div class="stat-label">Parcours</div>
+    </div>
+
+    <div class="card stat-card">
+        <div class="stat-nombre">{{ nb_et }}</div>
+        <div class="stat-label">
+            Emplois du temps créés
+        </div>
+    </div>
+
+    <div class="card stat-card">
+        <div class="stat-nombre stat-vert">
+            {{ nb_publies }}
+        </div>
+        <div class="stat-label">Publiés </div>
+    </div>
+
+    <div class="card stat-card">
+        <div class="stat-nombre stat-orange">
+            {{ nb_brouillons }}
+        </div>
+        <div class="stat-label">
+            En brouillon 
+        </div>
+    </div>
+
+</div>
+
+<div class="card">
+    <div class="card-titre">Actions rapides</div>
+    <div class="actions-rapides">
+        <a href="{{ url_for('main.creation') }}"
+           class="btn btn-primaire">
+             Créer un emploi du temps
+        </a>
+        <a href="{{ url_for('main.publication') }}"
+           class="btn btn-succes">
+             Publier un emploi du temps
+        </a>
+        <a href="{{ url_for('main.gestion') }}"
+           class="btn btn-secondaire">
+             Gérer les emplois du temps
+        </a>
+        <a href="{{ url_for('main.consultation') }}"
+           class="btn btn-secondaire">
+             Consulter un emploi du temps
+        </a>
+    </div>
+</div>
+
+{% if derniers_et %}
+<div class="card">
+    <div class="card-titre">
+        Derniers emplois du temps créés
+    </div>
+    <table class="tableau">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Parcours</th>
+                <th>Session</th>
+                <th>Date début</th>
+                <th>Statut</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in derniers_et %}
+            <tr>
+                <td>#{{ item.edt.id }}</td>
+                <td>{{ item.parcours }}</td>
+                <td>{{ item.edt.session | capitalize }}</td>
+                <td>{{ item.edt.date_debut }}</td>
+                <td>
+                    {% if item.edt.publie == 1 %}
+                    <span class="badge-publie">Publié</span>
+                    {% else %}
+                    <span class="badge-brouillon"> Brouillon</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="{{ url_for('main.detail_et',
+                              edt_id=item.edt.id) }}"
+                       class="btn btn-secondaire btn-sm">
+                         Voir
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+{% endblock %}

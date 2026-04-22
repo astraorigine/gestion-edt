@@ -1,0 +1,452 @@
+/* ═══════════════════════════════════════
+   GESTION EDT — Feuille de style
+   Méthode XP — Sprint 4
+   ═══════════════════════════════════════ */
+
+/* ─── Variables de couleur ─────────────
+   Correspondent à la colorimétrie
+   des types de matières              */
+:root {
+    --bleu       : #3498DB;
+    --jaune      : #F1C40F;
+    --noir       : #2C3E50;
+    --rouge      : #E74C3C;
+    --bg         : #F5F6FA;
+    --blanc      : #FFFFFF;
+    --gris-clair : #ECF0F1;
+    --texte      : #2C3E50;
+    --succes     : #27AE60;
+    --erreur     : #E74C3C;
+    --info       : #2980B9;
+}
+
+/* ─── Reset de base ─────────────────── */
+* {
+    margin     : 0;
+    padding    : 0;
+    box-sizing : border-box;
+}
+
+body {
+    font-family : 'Segoe UI', Arial,
+                  sans-serif;
+    background  : var(--bg);
+    color       : var(--texte);
+    font-size   : 14px;
+    line-height : 1.6;
+}
+
+/* ─── Barre de navigation ───────────── */
+.navbar {
+    background    : var(--noir);
+    padding       : 0 30px;
+    display       : flex;
+    align-items   : center;
+    justify-content: space-between;
+    height        : 60px;
+    box-shadow    : 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.navbar-brand {
+    color       : var(--blanc);
+    font-size   : 18px;
+    font-weight : bold;
+}
+
+.navbar-links {
+    display : flex;
+    gap     : 8px;
+}
+
+.nav-link {
+    color           : var(--gris-clair);
+    text-decoration : none;
+    padding         : 8px 14px;
+    border-radius   : 4px;
+    font-size       : 13px;
+    transition      : background 0.2s;
+}
+
+.nav-link:hover {
+    background : rgba(255,255,255,0.15);
+    color      : var(--blanc);
+}
+
+/* ─── Contenu principal ─────────────── */
+.container {
+    max-width : 1100px;
+    margin    : 30px auto;
+    padding   : 0 20px;
+}
+
+.page-titre {
+    font-size     : 22px;
+    color         : var(--noir);
+    margin-bottom : 24px;
+    padding-bottom: 10px;
+    border-bottom : 3px solid var(--bleu);
+}
+
+/* ─── Cartes ────────────────────────── */
+.card {
+    background    : var(--blanc);
+    border-radius : 8px;
+    padding       : 24px;
+    margin-bottom : 20px;
+    box-shadow    : 0 2px 8px
+                    rgba(0,0,0,0.08);
+}
+
+.card-titre {
+    font-size     : 16px;
+    font-weight   : bold;
+    color         : var(--noir);
+    margin-bottom : 16px;
+}
+
+/* ─── Formulaires ───────────────────── */
+.form-group {
+    margin-bottom : 16px;
+}
+
+.form-group label {
+    display       : block;
+    font-weight   : bold;
+    margin-bottom : 6px;
+    color         : var(--texte);
+}
+
+.form-group select,
+.form-group input {
+    width         : 100%;
+    padding       : 10px 12px;
+    border        : 1px solid #ddd;
+    border-radius : 4px;
+    font-size     : 14px;
+    background    : var(--blanc);
+}
+
+.form-group select:focus,
+.form-group input:focus {
+    outline      : none;
+    border-color : var(--bleu);
+    box-shadow   : 0 0 0 2px
+                   rgba(52,152,219,0.2);
+}
+
+/* ─── Boutons ───────────────────────── */
+.btn {
+    padding       : 10px 20px;
+    border        : none;
+    border-radius : 4px;
+    cursor        : pointer;
+    font-size     : 14px;
+    font-weight   : bold;
+    text-decoration: none;
+    display       : inline-block;
+    transition    : opacity 0.2s;
+}
+
+.btn:hover       { opacity: 0.85; }
+
+.btn-primaire    {
+    background : var(--bleu);
+    color      : var(--blanc);
+}
+.btn-succes      {
+    background : var(--succes);
+    color      : var(--blanc);
+}
+.btn-danger      {
+    background : var(--rouge);
+    color      : var(--blanc);
+}
+.btn-secondaire  {
+    background : var(--gris-clair);
+    color      : var(--texte);
+}
+
+/* ─── Messages flash ────────────────── */
+.alert {
+    padding       : 12px 16px;
+    border-radius : 4px;
+    margin        : 16px 30px;
+    font-weight   : bold;
+}
+
+.alert-success {
+    background : #D5F5E3;
+    color      : #1E8449;
+    border-left: 4px solid var(--succes);
+}
+
+.alert-error {
+    background : #FADBD8;
+    color      : #922B21;
+    border-left: 4px solid var(--rouge);
+}
+
+.alert-info {
+    background : #D6EAF8;
+    color      : #1A5276;
+    border-left: 4px solid var(--info);
+}
+
+/* ─── Tableaux ──────────────────────── */
+.tableau {
+    width           : 100%;
+    border-collapse : collapse;
+    margin-top      : 16px;
+}
+
+.tableau th {
+    background : var(--noir);
+    color      : var(--blanc);
+    padding    : 10px 14px;
+    text-align : left;
+    font-size  : 13px;
+}
+
+.tableau td {
+    padding    : 10px 14px;
+    border-bottom: 1px solid #eee;
+}
+
+.tableau tr:hover {
+    background : var(--gris-clair);
+}
+
+/* ─── Colorimétrie des matières ─────── */
+.badge-bleu   {
+    background : var(--bleu);
+    color      : var(--blanc);
+    padding    : 3px 8px;
+    border-radius: 12px;
+    font-size  : 12px;
+}
+
+.badge-jaune  {
+    background : var(--jaune);
+    color      : var(--noir);
+    padding    : 3px 8px;
+    border-radius: 12px;
+    font-size  : 12px;
+}
+
+.badge-rouge  {
+    background : var(--rouge);
+    color      : var(--blanc);
+    padding    : 3px 8px;
+    border-radius: 12px;
+    font-size  : 12px;
+}
+
+.badge-noir   {
+    background : var(--noir);
+    color      : var(--blanc);
+    padding    : 3px 8px;
+    border-radius: 12px;
+    font-size  : 12px;
+}
+
+/* ─── Grille emploi du temps ─────────── */
+.grille-et {
+    display               : grid;
+    grid-template-columns : 120px repeat(6, 1fr);
+    gap                   : 2px;
+    margin-top            : 20px;
+}
+
+.grille-heure {
+    background    : var(--noir);
+    color         : var(--blanc);
+    padding       : 8px;
+    text-align    : center;
+    font-size     : 12px;
+    font-weight   : bold;
+}
+
+.grille-seance-bleu   { background: #D6EAF8; }
+.grille-seance-jaune  { background: #FEF9E7; }
+.grille-seance-rouge  { background: #FADBD8; }
+.grille-seance-noir   { background: var(--gris-clair); }
+.grille-seance-vide   { background: var(--blanc); }
+
+.grille-seance {
+    padding     : 8px;
+    font-size   : 12px;
+    min-height  : 60px;
+    border      : 1px solid #eee;
+}
+
+/* ─── Pied de page ──────────────────── */
+.footer {
+    background  : var(--noir);
+    color       : var(--gris-clair);
+    text-align  : center;
+    padding     : 16px;
+    margin-top  : 40px;
+    font-size   : 12px;
+}
+/* ─── Stats grille ──────────────────────── */
+.stats-grille {
+    display               : grid;
+    grid-template-columns : repeat(4, 1fr);
+    gap                   : 16px;
+    margin-bottom         : 20px;
+}
+
+.stat-card {
+    text-align : center;
+    padding    : 20px;
+}
+
+.stat-nombre {
+    font-size   : 48px;
+    font-weight : bold;
+    color       : var(--noir);
+    line-height : 1;
+}
+
+.stat-vert   { color: var(--succes) !important; }
+.stat-orange { color: var(--accent) !important; }
+
+.stat-label {
+    font-size  : 13px;
+    color      : var(--mute);
+    margin-top : 6px;
+}
+
+/* ─── Actions rapides ───────────────────── */
+.actions-rapides {
+    display   : flex;
+    gap       : 12px;
+    flex-wrap : wrap;
+}
+
+/* ─── Formulaire en ligne ───────────────── */
+.form-row {
+    display               : grid;
+    grid-template-columns : repeat(3, 1fr);
+    gap                   : 16px;
+}
+
+/* ─── Groupe d'actions ──────────────────── */
+.action-groupe {
+    display   : flex;
+    gap       : 8px;
+    flex-wrap : wrap;
+    align-items: center;
+}
+
+/* ─── Bouton petit ──────────────────────── */
+.btn-sm {
+    padding   : 6px 12px;
+    font-size : 12px;
+}
+
+/* ─── Badges statuts ────────────────────── */
+.badge-publie {
+    background    : #D5F5E3;
+    color         : #1E8449;
+    padding       : 3px 10px;
+    border-radius : 12px;
+    font-size     : 12px;
+    font-weight   : bold;
+}
+
+.badge-brouillon {
+    background    : #FEF9E7;
+    color         : #9A7D0A;
+    padding       : 3px 10px;
+    border-radius : 12px;
+    font-size     : 12px;
+}
+
+.badge-session {
+    background    : var(--gris-clair);
+    color         : var(--texte);
+    padding       : 3px 10px;
+    border-radius : 12px;
+    font-size     : 12px;
+}
+
+/* ─── Bloc jour ─────────────────────────── */
+.jour-block {
+    margin-bottom : 24px;
+}
+
+.jour-titre {
+    font-size     : 15px;
+    color         : var(--noir);
+    font-weight   : bold;
+    margin-bottom : 8px;
+    padding-left  : 8px;
+    border-left   : 4px solid var(--bleu);
+}
+
+/* ─── Zone export ───────────────────────── */
+.export-zone {
+    margin-top : 20px;
+    display    : flex;
+    gap        : 12px;
+}
+
+/* ─── Texte mute ─────────────────────────── */
+.texte-mute {
+    color     : var(--mute, #8892B0);
+    font-size : 12px;
+}
+
+/* ─── Message vide ──────────────────────── */
+.vide-message {
+    text-align : center;
+    padding    : 40px 20px;
+}
+
+.vide-icon {
+    font-size     : 48px;
+    margin-bottom : 16px;
+}
+
+.vide-message h3 {
+    color         : var(--noir);
+    margin-bottom : 8px;
+}
+
+.vide-message p {
+    color         : var(--mute, #8892B0);
+    margin-bottom : 20px;
+}
+
+/* ─── Infos grille ──────────────────────── */
+.info-grille {
+    display               : grid;
+    grid-template-columns : repeat(3, 1fr);
+    gap                   : 16px;
+}
+
+.info-item {
+    display        : flex;
+    flex-direction : column;
+    gap            : 4px;
+}
+
+.info-label {
+    font-size   : 11px;
+    color       : var(--mute, #8892B0);
+    font-weight : bold;
+    text-transform: uppercase;
+}
+
+.info-valeur {
+    font-size   : 14px;
+    color       : var(--texte);
+    font-weight : bold;
+}
+
+/* ─── Variable manquante ────────────────── */
+:root {
+    --accent : #F4A261;
+    --mute   : #8892B0;
+}

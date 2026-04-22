@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block titre %}Gestion{% endblock %}
+
+{% block page_titre %}
+    ⚙️ Gérer les Emplois du Temps
+{% endblock %}
+
+{% block contenu %}
+
+{% if ets %}
+<div class="card">
+    <div class="card-titre">
+        Emplois du temps actifs
+    </div>
+
+    <table class="tableau">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Parcours</th>
+                <th>Semestre</th>
+                <th>Session</th>
+                <th>Statut</th>
+                <th>Séances</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in ets %}
+            <tr>
+                <td>#{{ item.edt.id }}</td>
+                <td>{{ item.parcours }}</td>
+                <td>Semestre {{ item.semestre }}</td>
+                <td>
+                    <span class="badge-session">
+                        {{ item.edt.session | capitalize }}
+                    </span>
+                </td>
+                <td>
+                    {% if item.edt.publie == 1 %}
+                        <span class="badge-publie">
+                            ✅ Publié
+                        </span>
+                    {% else %}
+                        <span class="badge-brouillon">
+                             Brouillon
+                        </span>
+                    {% endif %}
+                </td>
+                <td>{{ item.nb_seances }}</td>
+                <td>
+                    <div class="action-groupe">
+
+                        <!-- Bouton Voir -->
+                        <a href="{{ url_for('main.detail_et',
+                                  edt_id=item.edt.id) }}"
+                           class="btn btn-secondaire btn-sm">
+                             Voir
+                        </a>
+
+                        <!-- Bouton Archiver -->
+                        <form method="POST"
+                              style="display:inline;">
+                            <input type="hidden"
+                                   name="action"
+                                   value="archiver">
+                            <input type="hidden"
+                                   name="edt_id"
+                                   value="{{ item.edt.id }}">
+                            <button type="submit"
+                                    class="btn btn-secondaire btn-sm"
+                                    onclick="return confirm(
+                                        'Archiver cet emploi du temps ? '
+                                        + 'Il sera en lecture seule.'
+                                    )">
+                                 Archiver
+                            </button>
+                        </form>
+
+                        <!-- Bouton Supprimer -->
+                        {% if item.edt.publie == 0 %}
+                        <form method="POST"
+                              style="display:inline;">
+                            <input type="hidden"
+                                   name="action"
+                                   value="supprimer">
+                            <input type="hidden"
+                                   name="edt_id"
+                                   value="{{ item.edt.id }}">
+                            <button type="submit"
+                                    class="btn btn-danger btn-sm"
+                                    onclick="return confirm(
+                                        '⚠️ Supprimer définitivement '
+                                        + 'cet emploi du temps ?'
+                                    )">
+                                🗑️ Supprimer
+                            </button>
+                        </form>
+                        {% endif %}
+
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% else %}
+<div class="card">
+    <div class="vide-message">
+        <div class="vide-icon">📂</div>
+        <h3>Aucun emploi du temps actif</h3>
+        <a href="{{ url_for('main.creation') }}"
+           class="btn btn-primaire">
+         Créer un emploi du temps
+        </a>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

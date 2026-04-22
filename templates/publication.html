@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block titre %}Publication{% endblock %}
+
+{% block page_titre %}
+     Publier un Emploi du Temps
+{% endblock %}
+
+{% block contenu %}
+
+{% if ets %}
+<div class="card">
+    <div class="card-titre">
+        Emplois du temps disponibles
+        (non encore publiés)
+    </div>
+
+    <table class="tableau">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Parcours</th>
+                <th>Semestre</th>
+                <th>Session</th>
+                <th>Date début</th>
+                <th>Séances</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in ets %}
+            <tr>
+                <td>#{{ item.edt.id }}</td>
+                <td>{{ item.parcours }}</td>
+                <td>Semestre {{ item.semestre }}</td>
+                <td>
+                    <span class="badge-{{ item.edt.session }}">
+                        {{ item.edt.session | capitalize }}
+                    </span>
+                </td>
+                <td>{{ item.edt.date_debut }}</td>
+                <td>{{ item.nb_seances }} séances</td>
+                <td>
+                    {% if item.nb_seances > 0 %}
+                    <form method="POST">
+                        <input type="hidden"
+                               name="edt_id"
+                               value="{{ item.edt.id }}">
+                        <button type="submit"
+                                class="btn btn-succes"
+                                onclick="return confirm(
+                                    'Publier cet emploi du temps ?'
+                                )">
+                             Publier
+                        </button>
+                    </form>
+                    {% else %}
+                    <span class="texte-mute">
+                        ⚠️ Aucune séance
+                    </span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% else %}
+<div class="card">
+    <div class="vide-message">
+        <div class="vide-icon"></div>
+        <h3>Aucun emploi du temps à publier</h3>
+        <p>
+            Tous les emplois du temps sont
+            déjà publiés ou archivés.
+        </p>
+        <a href="{{ url_for('main.creation') }}"
+           class="btn btn-primaire">
+          Créer un emploi du temps
+        </a>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
