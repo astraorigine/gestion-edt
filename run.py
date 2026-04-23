@@ -1,7 +1,7 @@
 # run.py
 # ─────────────────────────────────────────
 # Point d'entrée de l'application Flask
-# Projet : Gestion EDT — Méthode XP
+# Projet : Gestion EDT — Méthode XP(AstraTeams)
 # ─────────────────────────────────────────
 
 from app import create_app

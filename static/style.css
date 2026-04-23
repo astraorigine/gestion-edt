@@ -288,6 +288,18 @@ body {
     margin-top  : 40px;
     font-size   : 12px;
 }
+html, body {
+    min-height: 100vh;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+}
+
+main.container {
+    flex: 1;
+}
 /* ─── Stats grille ──────────────────────── */
 .stats-grille {
     display               : grid;
