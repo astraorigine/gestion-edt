@@ -281,6 +281,59 @@ class Seance(Base):
                 f"{self.heure_debut} — "
                 f"{self.duree}h>")
 
+# ─────────────────────────────────────────
+# TABLE : Utilisateur
+# Gère la connexion et les rôles
+# ─────────────────────────────────────────
+class Utilisateur(Base):
+    __tablename__ = "utilisateur"
+
+    id          = Column(
+        Integer, primary_key=True,
+        autoincrement=True
+    )
+    nom         = Column(
+        String(100), nullable=False
+    )
+    prenom      = Column(
+        String(100), nullable=False
+    )
+    email       = Column(
+        String(150), nullable=False,
+        unique=True
+    )
+    mot_de_passe = Column(
+        String(255), nullable=False
+    )
+    # Rôle : cd / etudiant /
+    #        enseignant / surveillant
+    role        = Column(
+        Enum(
+            "cd",
+            "etudiant",
+            "enseignant",
+            "surveillant",
+            name="role_enum"
+        ),
+        nullable=False
+    )
+    actif       = Column(
+        Integer, default=1
+    )
+    # Lien optionnel vers enseignant
+    # (si role = enseignant)
+    enseignant_id = Column(
+        Integer,
+        ForeignKey("enseignant.id"),
+        nullable=True
+    )
+
+    def __repr__(self):
+        return (
+            f"<Utilisateur "
+            f"{self.email} [{self.role}]>"
+        )
+
 
 # ─────────────────────────────────────────
 # CRÉATION DES TABLES

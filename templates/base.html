@@ -17,34 +17,55 @@
 <body>
 
     <!-- ═══ BARRE DE NAVIGATION ═══ -->
-    <nav class="navbar">
-        <div class="navbar-brand">
-             Gestion des Emplois du Temps
-        </div>
-        <div class="navbar-links">
-            <a href="{{ url_for('main.index') }}"
-               class="nav-link">
-                 Accueil
-            </a>
-            <a href="{{ url_for('main.creation') }}"
-               class="nav-link">
-             Créer un EDT
-            </a>
-            <a href="{{ url_for('main.publication') }}"
-               class="nav-link">
-                 Publier
-            </a>
-            <a href="{{ url_for('main.gestion') }}"
-               class="nav-link">
-                Gérer
-            </a>
-            <a href="{{ url_for('main.consultation') }}"
-               class="nav-link">
-                 Consulter
-            </a>
-        </div>
-    </nav>
 
+<nav class="navbar">
+    <div class="navbar-brand">
+         Gestion des Emplois du Temps
+    </div>
+    <div class="navbar-links">
+
+        <a href="{{ url_for('main.index') }}"
+           class="nav-link">
+             Accueil
+        </a>
+
+        {% if session.get('utilisateur_role') == 'cd' %}
+        <a href="{{ url_for('main.creation') }}"
+           class="nav-link">
+             Créer
+        </a>
+        <a href="{{ url_for('main.publication') }}"
+           class="nav-link">
+             Publier
+        </a>
+        <a href="{{ url_for('main.gestion') }}"
+           class="nav-link">
+             Gérer
+        </a>
+        {% endif %}
+
+        <a href="{{ url_for('main.consultation') }}"
+           class="nav-link">
+             Consulter
+        </a>
+
+        <!-- Utilisateur connecté -->
+        <div class="nav-user">
+            <span class="nav-role-badge
+                  role-{{ session.get('utilisateur_role','') }}">
+                {{ session.get('utilisateur_role','').upper() }}
+            </span>
+            <span class="nav-nom">
+                {{ session.get('utilisateur_prenom','') }}
+            </span>
+            <a href="{{ url_for('main.deconnexion') }}"
+               class="nav-link nav-deconnexion">
+                 Déconnexion
+            </a>
+        </div>
+
+    </div>
+</nav>
     <!-- ═══ MESSAGES FLASH ═══ -->
     {% with messages = get_flashed_messages(
         with_categories=true) %}

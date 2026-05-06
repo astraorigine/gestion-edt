@@ -525,6 +525,51 @@ def inserer_donnees():
                 f"   {nb_ko} affectations "
                 f"non trouvées"
             )
+        
+
+
+          # ─────────────────────────────────
+        # 6. UTILISATEURS
+        # ─────────────────────────────────
+        from app.models import Utilisateur
+        from app.auth import hacher_mdp
+
+        print("→ Insertion des utilisateurs...")
+
+        utilisateurs = [
+            Utilisateur(
+                nom          = "Chef de Département",
+                prenom       = "",
+                email        = "cd@udsn.cg",
+                mot_de_passe = hacher_mdp("cd123"),
+                role         = "cd"
+            ),
+            Utilisateur(
+                nom          = "Obond",
+                prenom       = "Rufina",
+                email        = "etudiant@udsn.cg",
+                mot_de_passe = hacher_mdp("etu123"),
+                role         = "etudiant"
+            ),
+            Utilisateur(
+                nom          = "YOCO YOCO",
+                prenom       = "Prince",
+                email        = "prof@udsn.cg",
+                mot_de_passe = hacher_mdp("prof123"),
+                role         = "enseignant"
+            ),
+            Utilisateur(
+                nom          = "François",
+                prenom       = "Bombe",
+                email        = "surv@udsn.cg",
+                mot_de_passe = hacher_mdp("surv123"),
+                role         = "surveillant"
+            ),
+        ]
+
+        session.add_all(utilisateurs)
+
+
         session.commit()
 
         print(f"\n Toutes les données insérées !")
@@ -535,6 +580,13 @@ def inserer_donnees():
         print(f"   -> {len(typeMatiere_list)} types de matières")
         print(f"   → {len(matieres)} matières")
         print(f"   → {len(enseignants)} enseignants")
+        print(
+            f"   {len(utilisateurs)} "
+            f"utilisateurs créés"
+        )
+
+
+      
 
     except Exception as e:
         session.rollback()

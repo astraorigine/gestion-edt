@@ -462,3 +462,34 @@ main.container {
     --accent : #F4A261;
     --mute   : #8892B0;
 }
+/* ─── Utilisateur connecté navbar ──── */
+.nav-user {
+    display     : flex;
+    align-items : center;
+    gap         : 8px;
+    margin-left : 16px;
+    padding-left: 16px;
+    border-left : 1px solid rgba(255,255,255,0.2);
+}
+
+.nav-nom {
+    color     : var(--gris-clair);
+    font-size : 13px;
+}
+
+.nav-deconnexion {
+    color      : #E74C3C !important;
+    font-weight: bold;
+}
+
+.nav-role-badge {
+    padding       : 2px 8px;
+    border-radius : 10px;
+    font-size     : 10px;
+    font-weight   : bold;
+}
+
+.role-cd          { background:#D6EAF8; color:#1A5276; }
+.role-etudiant    { background:#D5F5E3; color:#1E8449; }
+.role-enseignant  { background:#FEF9E7; color:#9A7D0A; }
+.role-surveillant { background:#FADBD8; color:#922B21; }

@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width,
+                   initial-scale=1.0">
+    <title>Connexion — Gestion EDT</title>
+    <link rel="stylesheet"
+          href="{{ url_for('static',
+                 filename='style.css') }}">
+    <style>
+        body {
+            display         : flex;
+            justify-content : center;
+            align-items     : center;
+            min-height      : 100vh;
+            background      : #1A1F3B;
+        }
+
+        .login-box {
+            background    : #FFFFFF;
+            border-radius : 12px;
+            padding       : 40px;
+            width         : 420px;
+            box-shadow    : 0 20px 60px
+                            rgba(0,0,0,0.4);
+        }
+
+        .login-logo {
+            text-align    : center;
+            margin-bottom : 24px;
+        }
+
+        .login-logo h1 {
+            font-size     : 22px;
+            color         : #1A1F3B;
+            font-weight   : bold;
+            margin-bottom : 4px;
+        }
+
+        .login-logo p {
+            font-size : 13px;
+            color     : #8892B0;
+        }
+
+        .login-titre {
+            font-size     : 18px;
+            font-weight   : bold;
+            color         : #1A1F3B;
+            margin-bottom : 20px;
+            text-align    : center;
+        }
+
+        .login-btn {
+            width         : 100%;
+            padding       : 12px;
+            background    : #1A1F3B;
+            color         : white;
+            border        : none;
+            border-radius : 6px;
+            font-size     : 15px;
+            font-weight   : bold;
+            cursor        : pointer;
+            margin-top    : 8px;
+        }
+
+        .login-btn:hover {
+            background : #252B50;
+        }
+
+        .roles-info {
+            margin-top    : 24px;
+            padding       : 16px;
+            background    : #F0F2F8;
+            border-radius : 8px;
+        }
+
+        .roles-info h4 {
+            font-size     : 12px;
+            color         : #8892B0;
+            margin-bottom : 8px;
+            text-transform: uppercase;
+        }
+
+        .role-ligne {
+            display         : flex;
+            justify-content : space-between;
+            font-size       : 12px;
+            padding         : 3px 0;
+            color           : #2C3E50;
+        }
+
+        .role-badge {
+            padding       : 2px 8px;
+            border-radius : 10px;
+            font-size     : 10px;
+            font-weight   : bold;
+        }
+
+        .role-cd          { background:#D6EAF8; color:#1A5276; }
+        .role-etudiant    { background:#D5F5E3; color:#1E8449; }
+        .role-enseignant  { background:#FEF9E7; color:#9A7D0A; }
+        .role-surveillant { background:#FADBD8; color:#922B21; }
+    </style>
+</head>
+<body>
+
+<div class="login-box">
+
+    <!-- Logo -->
+    <div class="login-logo">
+        <div style="font-size:36px;"></div>
+        <h1>Gestion des Emplois du Temps</h1>
+        <p>Université Denis Sassou N'Guesso</p>
+    </div>
+
+    <!-- Messages flash -->
+    {% with messages = get_flashed_messages(
+        with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}"
+                     style="margin-bottom:16px;">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Formulaire -->
+    <p class="login-titre">Connexion</p>
+
+    <form method="POST">
+
+        <div class="form-group">
+            <label>Adresse email</label>
+            <input type="email"
+                   name="email"
+                   placeholder="votre@email.com"
+                   required
+                   autofocus>
+        </div>
+
+        <div class="form-group">
+            <label>Mot de passe</label>
+            <input type="password"
+                   name="mot_de_passe"
+                   placeholder="••••••••"
+                   required>
+        </div>
+
+        <button type="submit"
+                class="login-btn">
+             Se connecter
+        </button>
+
+    </form>
+
+    <!-- Comptes de démonstration -->
+    <div class="roles-info">
+        <h4>Comptes de démonstration</h4>
+
+        <div class="role-ligne">
+            <span>cd@udsn.cg / cd123</span>
+            <span class="role-badge role-cd">
+                Chef de Département
+            </span>
+        </div>
+        <div class="role-ligne">
+            <span>etudiant@udsn.cg / etu123</span>
+            <span class="role-badge role-etudiant">
+                Étudiant
+            </span>
+        </div>
+        <div class="role-ligne">
+            <span>prof@udsn.cg / prof123</span>
+            <span class="role-badge role-enseignant">
+                Enseignant
+            </span>
+        </div>
+        <div class="role-ligne">
+            <span>surv@udsn.cg / surv123</span>
+            <span class="role-badge role-surveillant">
+                Surveillant
+            </span>
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>

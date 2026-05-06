@@ -8,10 +8,11 @@ sys.path.insert(0, os.path.dirname(
 ))
 from config import DATABASE_URL
 
+
+
 def create_app():
     """
     Crée et configure l'application Flask.
-    Retourne l'app configurée.
     """
     app = Flask(
         __name__,
@@ -19,10 +20,12 @@ def create_app():
         static_folder="../static"
     )
 
-    app.secret_key = "gestion_edt_xp_2026"
+    app.secret_key = "gestion_edt_xp_2026_udsg"
 
     # Enregistrer les routes
     from app.routes import main
     app.register_blueprint(main)
 
     return app
+
+

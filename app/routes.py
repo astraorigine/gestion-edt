@@ -33,7 +33,112 @@ from app.algorithmes import (
     assigner_enseignants
 )
 
+from app.auth import (
+    hacher_mdp, verifier_mdp,
+    login_requis, role_requis,
+    get_utilisateur_connecte
+)
+from app.models import Utilisateur
+
 main = Blueprint("main", __name__)
+
+# ═════════════════════════════════════════
+# CONNEXION
+# ═════════════════════════════════════════
+@main.route(
+    "/connexion",
+    methods=["GET", "POST"]
+)
+def connexion():
+    """
+    Page de connexion.
+    Redirige vers accueil si déjà connecté.
+    """
+    from flask import session as flask_session
+
+    # Déjà connecté
+    if "utilisateur_id" in flask_session:
+        return redirect(url_for("main.index"))
+
+    if request.method == "POST":
+        email   = request.form["email"].strip()
+        mdp     = request.form["mot_de_passe"]
+
+        db = get_db()
+        try:
+            utilisateur = db.query(
+                Utilisateur
+            ).filter_by(
+                email=email, actif=1
+            ).first()
+
+            if not utilisateur:
+                flash(
+                    "Email introuvable "
+                    "ou compte désactivé.",
+                    "error"
+                )
+                return render_template(
+                    "connexion.html"
+                )
+
+            if not verifier_mdp(
+                mdp,
+                utilisateur.mot_de_passe
+            ):
+                flash(
+                    "Mot de passe incorrect.",
+                    "error"
+                )
+                return render_template(
+                    "connexion.html"
+                )
+
+            # Connexion réussie
+            flask_session["utilisateur_id"] = (
+                utilisateur.id
+            )
+            flask_session["utilisateur_nom"] = (
+                utilisateur.nom
+            )
+            flask_session["utilisateur_prenom"] = (
+                utilisateur.prenom
+            )
+            flask_session["utilisateur_email"] = (
+                utilisateur.email
+            )
+            flask_session["utilisateur_role"] = (
+                utilisateur.role
+            )
+
+            flash(
+                f"Bienvenue "
+                f"{utilisateur.prenom} "
+                f"{utilisateur.nom} ! ",
+                "success"
+            )
+            return redirect(
+                url_for("main.index")
+            )
+
+        finally:
+            db.close()
+
+    return render_template("connexion.html")
+
+
+# ═════════════════════════════════════════
+# DÉCONNEXION
+# ═════════════════════════════════════════
+@main.route("/deconnexion")
+def deconnexion():
+    from flask import session as flask_session
+    flask_session.clear()
+    flash(
+        "Vous avez été déconnecté.",
+        "info"
+    )
+    return redirect(url_for("main.connexion"))
 
 
 def get_db():
@@ -97,6 +202,7 @@ def get_seances_dict(db, edt_id):
 # ACCUEIL
 # ═════════════════════════════════════════
 @main.route("/")
+@login_requis
 def index():
     db = get_db()
     try:
@@ -140,6 +246,8 @@ def index():
     "/creation",
     methods=["GET", "POST"]
 )
+@login_requis
+@role_requis("cd")
 def creation():
     db = get_db()
     try:
@@ -245,6 +353,7 @@ def creation():
 # DÉTAIL D'UN EMPLOI DU TEMPS
 # ═════════════════════════════════════════
 @main.route("/et/<int:edt_id>")
+@login_requis
 def detail_et(edt_id):
     db = get_db()
     try:
@@ -290,6 +399,7 @@ def detail_et(edt_id):
 @main.route(
     "/api/semestres/<int:parcours_id>"
 )
+@login_requis
 def get_semestres(parcours_id):
     db = get_db()
     try:
@@ -311,6 +421,8 @@ def get_semestres(parcours_id):
     "/publication",
     methods=["GET", "POST"]
 )
+@login_requis
+@role_requis("cd")
 def publication():
     db = get_db()
     try:
@@ -358,6 +470,8 @@ def publication():
     "/gestion",
     methods=["GET", "POST"]
 )
+@login_requis
+@role_requis("cd")
 def gestion():
     db = get_db()
     try:
@@ -413,6 +527,7 @@ def gestion():
     "/consultation",
     methods=["GET", "POST"]
 )
+@login_requis
 def consultation():
     db = get_db()
     try:
@@ -479,6 +594,7 @@ def consultation():
 # EXPORT EXCEL
 # ═════════════════════════════════════════
 @main.route("/export/excel/<int:edt_id>")
+@login_requis
 def export_excel(edt_id):
     db = get_db()
     try:
@@ -503,6 +619,7 @@ def export_excel(edt_id):
 # EXPORT PDF
 # ═════════════════════════════════════════
 @main.route("/export/pdf/<int:edt_id>")
+@login_requis
 def export_pdf(edt_id):
     db = get_db()
     try:
