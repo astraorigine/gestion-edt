@@ -142,11 +142,13 @@ class Enseignant(Base):
 # ─────────────────────────────────────────
 # TABLE : EnseignantMatiere
 # ─────────────────────────────────────────
-"""
- Lien entre enseignant et matière(s)
- Un enseignant peut enseigner plusieurs matières, une matière peut être enseignée
- par plusieurs enseignants
-"""
+# ─────────────────────────────────────────
+# TABLE : EnseignantMatiere
+# Lien enseignant ↔ matière
+# AVEC parcours et semestre pour distinguer
+# quel prof enseigne quelle matière
+# dans quel parcours/semestre
+# ─────────────────────────────────────────
 class EnseignantMatiere(Base):
     __tablename__ = "enseignant_matiere"
 
@@ -164,17 +166,24 @@ class EnseignantMatiere(Base):
         ForeignKey("matiere.id"),
         nullable=False
     )
+    # Nouveau : lien précis par semestre
+    semestre_id   = Column(
+        Integer,
+        ForeignKey("semestre.id"),
+        nullable=False
+    )
 
     enseignant = relationship("Enseignant")
     matiere    = relationship("Matiere")
+    semestre   = relationship("Semestre")
 
     def __repr__(self):
         return (
             f"<EnseignantMatiere "
             f"ens={self.enseignant_id} "
-            f"mat={self.matiere_id}>"
+            f"mat={self.matiere_id} "
+            f"sem={self.semestre_id}>"
         )
-
 
 # ─────────────────────────────────────────
 # TABLE : EmploiDuTemps

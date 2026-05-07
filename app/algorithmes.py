@@ -717,54 +717,43 @@ def sauvegarder_en_bd(
     session,
     planning,
     matieres,
-    parcours_id,
-    semestre_id,
-    type_session,
-    date_debut
+    edt_id,           # ← NOUVEAU : on passe l'id existant
+    parcours_id=None, # ← gardé pour compatibilité
+    semestre_id=None,
+    type_session=None,
+    date_debut=None
 ):
     """
-    Sauvegarde le planning généré
-    dans les tables EmploiDuTemps
-    et Seance de PostgreSQL.
+    Sauvegarde les séances du planning
+    dans un EmploiDuTemps EXISTANT.
 
-    Paramètres :
-      session      : session SQLAlchemy
-      planning     : dict du planning
-      matieres     : liste objets Matiere
-      parcours_id  : int
-      semestre_id  : int
-      type_session : "ordinaire" ou
-                     "rattrapage"
-      date_debut   : date Python
-
-    Retourne :
-      edt : objet EmploiDuTemps créé
+    Ne crée plus d'EmploiDuTemps.
+    Reçoit l'id de celui déjà créé
+    par creer_et().
     """
     from datetime import time as dt_time
 
-    # ── 1. Créer l'EmploiDuTemps ──────────
-    edt = EmploiDuTemps(
-        session     =type_session,
-        date_debut  =date_debut,
-        parcours_id =parcours_id,
-        semestre_id =semestre_id
-    )
-    session.add(edt)
-    session.flush()
-    # flush() pour récupérer edt.id
+    # Récupérer l'EmploiDuTemps existant
+    edt = session.query(
+        EmploiDuTemps
+    ).filter_by(id=edt_id).first()
+
+    if not edt:
+        raise ValueError(
+            f"EmploiDuTemps #{edt_id} "
+            f"introuvable."
+        )
 
     print(
-        f"\n Sauvegarde en BD..."
+        f"\n Sauvegarde des séances..."
         f" (EmploiDuTemps id={edt.id})"
     )
 
-    # ── Construire un index matières ──────
-    # Pour retrouver une matière par son nom
+    # Index matières par nom
     index_matieres = {
         m.nom: m for m in matieres
     }
 
-    # ── 2. Créer les Séances ──────────────
     nb_seances = 0
 
     for date_str, jour_info in planning.items():
@@ -778,50 +767,43 @@ def sauvegarder_en_bd(
             if matiere_etiquette is None:
                 continue
 
-            # Extraire le nom de la matière
-            # "Algorithmique [bleu]" → "Algorithmique"
+            # Extraire le nom
             nom_matiere = matiere_etiquette.split(
                 " ["
             )[0]
 
-            # Retrouver l'objet Matiere
             matiere_obj = index_matieres.get(
                 nom_matiere
             )
             if not matiere_obj:
                 print(
-                    f"   Matière introuvable "
-                    f": {nom_matiere}"
+                    f"  ⚠️ Matière introuvable"
+                    f" : {nom_matiere}"
                 )
                 continue
 
-            # Convertir heure en objet time
-            # "09h00" → time(9, 0)
+            # Convertir heure
             heure_str = horaires[idx][0]
             h = int(heure_str[:2])
             m = int(heure_str[3:5])
             heure_obj = dt_time(h, m)
 
-            # Créer la séance
-            # enseignant_id = None pour l'instant
-            # (sera rempli par GEDT-04)
             seance = Seance(
-                jour              =nom_jour,
-                heure_debut       =heure_obj,
-                duree             =2,
-                matiere_id        =matiere_obj.id,
-                enseignant_id     =1,
-                emploi_du_temps_id=edt.id
+                jour               = nom_jour,
+                heure_debut        = heure_obj,
+                duree              = 2,
+                matiere_id         = matiere_obj.id,
+                enseignant_id      = 1, # temporaire
+                emploi_du_temps_id = edt.id
             )
             session.add(seance)
             nb_seances += 1
 
-    # ── 3. Commit final ───────────────────
     session.commit()
 
     print(
         f"   {nb_seances} séances "
-        f"sauvegardées en BD"
+        f"sauvegardées"
     )
 
     return edt
@@ -835,153 +817,129 @@ def assigner_enseignants(
     emploi_du_temps_id
 ):
     """
-    Assigne automatiquement chaque enseignant
-    à sa séance selon la table
-    enseignant_matiere.
+    Assigne chaque enseignant à sa séance
+    en tenant compte du semestre précis.
 
-    Pour chaque séance de l'ET :
-      1. On trouve la matière
-      2. On cherche l'enseignant affecté
-         à cette matière dans
-         enseignant_matiere
-      3. On vérifie qu'il n'a pas
-         de conflit horaire ce jour-là
-      4. On l'assigne à la séance
-
-    Paramètres :
-      session            : SQLAlchemy session
-      emploi_du_temps_id : int
-
-    Retourne :
-      nb_assignées  (int) : séances assignées
-      nb_conflits   (int) : conflits détectés
-      conflits      (list): détail des conflits
+    Utilise enseignant_matiere filtré
+    par matiere_id ET semestre_id pour
+    trouver le bon enseignant.
     """
-    from app.models import EnseignantMatiere
+    from app.models import (
+        EnseignantMatiere, Matiere
+    )
 
-    # ── Récupérer toutes les séances de l'ET
     seances = session.query(Seance).filter_by(
         emploi_du_temps_id=emploi_du_temps_id
     ).all()
 
     if not seances:
-        print(" Aucune séance trouvée pour cet ET.")
+        print("⚠️ Aucune séance trouvée.")
         return 0, 0, []
 
     print(
-        f"\n Assignation des enseignants..."
-        f" ({len(seances)} séances)"
+        f"\n👨‍🏫 Assignation enseignants"
+        f" ({len(seances)} séances)..."
     )
-    print("-" * 50)
+    print("-" * 45)
 
     nb_assignées = 0
     nb_conflits  = 0
     conflits     = []
 
-    # ── Construire un registre des
-    #    créneaux déjà occupés par enseignant
-    # Structure :
-    # {enseignant_id: [(jour, heure_debut)]}
+    # Registre des créneaux par enseignant
+    # {enseignant_id: [(jour, heure)]}
     emploi_enseignant = {}
 
     for seance in seances:
 
-        # ── 1. Trouver l'enseignant
-        #       pour cette matière
+        # Trouver la matière pour récupérer
+        # son semestre_id
+        matiere = session.query(
+            Matiere
+        ).filter_by(
+            id=seance.matiere_id
+        ).first()
+
+        if not matiere:
+            continue
+
+        # Chercher l'enseignant pour cette
+        # matière ET ce semestre précis
         affectation = session.query(
             EnseignantMatiere
         ).filter_by(
-            matiere_id=seance.matiere_id
+            matiere_id  = seance.matiere_id,
+            semestre_id = matiere.semestre_id
         ).first()
 
         if not affectation:
             print(
-                f"    Aucun enseignant affecté "
-                f"à la matière id="
-                f"{seance.matiere_id}"
+                f"  ⚠️ Pas d'enseignant pour"
+                f" {matiere.nom}"
+                f" (sem={matiere.semestre_id})"
             )
             nb_conflits += 1
             conflits.append({
                 "type"   : "non_affecté",
-                "seance" : seance.id,
-                "matiere": seance.matiere_id
+                "matiere": matiere.nom
             })
             continue
 
         ens_id = affectation.enseignant_id
 
-        # ── 2. Vérifier conflit horaire
+        # Vérifier conflit horaire
         if ens_id not in emploi_enseignant:
             emploi_enseignant[ens_id] = []
 
-        creneau_actuel = (
+        creneau = (
             seance.jour,
             seance.heure_debut
         )
 
-        if creneau_actuel in emploi_enseignant[ens_id]:
-            # CONFLIT : enseignant déjà occupé
-            # On cherche un remplaçant
+        if creneau in emploi_enseignant[ens_id]:
+            # Chercher un remplaçant
             remplacant = _trouver_remplacant(
                 session,
                 seance.matiere_id,
-                creneau_actuel,
+                matiere.semestre_id,
+                creneau,
                 emploi_enseignant
             )
 
             if remplacant:
                 ens_id = remplacant.id
                 print(
-                    f"   Conflit résolu : "
-                    f"remplaçant trouvé "
-                    f"pour séance {seance.id}"
+                    f"  🔄 Remplacement : "
+                    f"{matiere.nom}"
                 )
             else:
                 print(
-                    f"   Conflit non résolu : "
-                    f"séance {seance.id} — "
-                    f"aucun remplaçant disponible"
+                    f"  ❌ Conflit non résolu :"
+                    f" {matiere.nom}"
                 )
                 nb_conflits += 1
-                conflits.append({
-                    "type"      : "conflit",
-                    "seance"    : seance.id,
-                    "enseignant": ens_id,
-                    "jour"      : seance.jour,
-                    "heure"     : str(seance.heure_debut)
-                })
                 continue
 
-        # ── 3. Assigner l'enseignant
+        # Assigner
         seance.enseignant_id = ens_id
-        emploi_enseignant[ens_id].append(
-            creneau_actuel
-        )
+        emploi_enseignant[ens_id].append(creneau)
         nb_assignées += 1
 
-        # Récupérer le nom pour l'affichage
         ens_obj = session.query(
             Enseignant
         ).filter_by(id=ens_id).first()
 
-        matiere_obj = session.query(
-            Matiere
-        ).filter_by(id=seance.matiere_id).first()
-
         print(
-            f"   {matiere_obj.nom:30s}"
+            f"  ✅ {matiere.nom:28s}"
             f" → {ens_obj.grade} "
             f"{ens_obj.nom}"
-            f" ({seance.jour})"
         )
 
-    # ── 4. Commit
     session.commit()
 
     print(
-        f"\n Résultat assignation :"
-        f"\n   {nb_assignées} séances assignées"
-        f"\n   {nb_conflits} conflits"
+        f"\n📊 {nb_assignées} séances "
+        f"assignées | {nb_conflits} conflits"
     )
 
     return nb_assignées, nb_conflits, conflits
@@ -990,42 +948,35 @@ def assigner_enseignants(
 def _trouver_remplacant(
     session,
     matiere_id,
-    creneau_actuel,
+    semestre_id,
+    creneau,
     emploi_enseignant
 ):
     """
-    Cherche un autre enseignant
-    pouvant remplacer sur cette matière
-    sans conflit horaire.
-
-    Retourne :
-      Enseignant disponible ou None
+    Cherche un autre enseignant disponible
+    pour cette matière et ce semestre.
     """
     from app.models import EnseignantMatiere
 
-    # Tous les enseignants pour cette matière
-    toutes_affectations = session.query(
+    toutes = session.query(
         EnseignantMatiere
     ).filter_by(
-        matiere_id=matiere_id
+        matiere_id  = matiere_id,
+        semestre_id = semestre_id
     ).all()
 
-    for affectation in toutes_affectations:
-        ens_id = affectation.enseignant_id
-
+    for aff in toutes:
         creneaux_ens = emploi_enseignant.get(
-            ens_id, []
+            aff.enseignant_id, []
         )
-
-        # Cet enseignant est-il libre ?
-        if creneau_actuel not in creneaux_ens:
+        if creneau not in creneaux_ens:
             return session.query(
                 Enseignant
-            ).filter_by(id=ens_id).first()
+            ).filter_by(
+                id=aff.enseignant_id
+            ).first()
 
     return None
-
-
 
 
 

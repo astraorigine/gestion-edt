@@ -434,84 +434,112 @@ def inserer_donnees():
         session.flush()
         print(f"  {len(enseignants)} enseignants créés")
 
-        # ─────────────────────────────────
+       # ─────────────────────────────────
         # 6. AFFECTATIONS ENSEIGNANT ↔ MATIÈRE
-        # On associe chaque enseignant
-        # à ses matières
+        # Chaque affectation est liée à
+        # un semestre précis pour éviter
+        # les conflits entre parcours
         # ─────────────────────────────────
         print("→ Affectation enseignants...")
 
-        # Construire un index pour retrouver facilement par nom
+        # Index pour retrouver facilement
         idx_ens = {
             e.nom: e for e in enseignants
         }
         idx_mat = {
-            m.nom: m for m in matieres
+            (m.nom, m.semestre_id): m
+            for m in matieres
         }
 
+        # Format :
+        # (nom_enseignant, nom_matiere, semestre)
         affectations_data = [
-            # (nom_enseignant, nom_matiere)
-            ("BATANGOUNA", "Algorithmique"),
-            ("BATANGOUNA", "Logique de prog."),
-            ("BENAZO",     "Base de données"),
-            ("BENAZO",     "Programmation Web"),
-            ("EPOUNDA",    "Analyse 1"),
-            ("EPOUNDA",    "Mathématiques"),
-            ("MONGONDZA",  "Gestion de projet"),
-            ("MONGONDZA",  "Communication"),
-            ("MAVOUNGOU",  "Systèmes d'info."),
-            ("MAVOUNGOU",  "Machine Learning"),
-            ("EKIAYE",     "TEF"),
-            ("EKIAYE",     "Société et Culture"),
-            ("MALONGA",    "Algèbre 1"),
-            ("MALONGA",    "Architecture logicielle"),
-            ("M'BAYA",     "Web et Réseaux"),
-            ("M'BAYA",     "Web et Réseaux"),
-            ("SAH",        "TP Python Data"),
-            ("SAH",        "TP Informatique"),
-            ("ZABAKANI",   "TP Statistiques"),
-            ("ZABAKANI",   "TP Programmation"),
-            ("MIAKAYIZILA","Data Visualisation"),
-            ("KENDE",      "Probabilités"),
-            ("KENDE",      "Probabilités avancées"),
-            ("MIZELE",     "Comptabilité"),
-            ("MFOUTOU",    "Techniques de Mgmt"),
-            ("MANKOU",     "Génie Mécanique"),
-            ("MANKOU",     "Physique"),
-            ("GAMPIKA",    "UML avancé"),
-            ("GAMPIKA",    "TP Développement"),
-            ("MABIALA",    "Électricité"),
-            ("MABIALA",    "Chimie"),
+
+            # ── SEMESTRE 1 — IG ──────────────
+            ("BATANGOUNA", "Analyse 1",       s1_ig.id),
+            ("MALONGA",    "Algèbre 1",       s1_ig.id),
+            ("BATANGOUNA", "Logique de prog.",s1_ig.id),
+            ("M'BAYA",     "Web et Réseaux",  s1_ig.id),
+            ("EKIAYE",     "Société et Culture",s1_ig.id),
+            ("EKIAYE",     "TEF",             s1_ig.id),
+            ("MIZELE",     "Comptabilité",    s1_ig.id),
+            ("SAH",        "TP Informatique", s1_ig.id),
+            ("MABIALA",    "Chimie",          s1_ig.id),
+
+            # ── SEMESTRE 1 — Big Data ────────
+            ("BATANGOUNA", "Analyse 1",       s1_bd.id),
+            ("MALONGA",    "Algèbre 1",       s1_bd.id),
+            ("KENDE",      "Probabilités",    s1_bd.id),
+            ("M'BAYA",     "Web et Réseaux",  s1_bd.id),
+            ("MFOUTOU",    "Techniques de Mgmt",s1_bd.id),
+            ("EKIAYE",     "TEF",             s1_bd.id),
+            ("ZABAKANI",   "TP Statistiques", s1_bd.id),
+
+            # ── SEMESTRE 1 — Génie Logiciel ──
+            ("BATANGOUNA", "Analyse 1",       s1_gl.id),
+            ("MALONGA",    "Algèbre 1",       s1_gl.id),
+            ("BATANGOUNA", "Logique de prog.",s1_gl.id),
+            ("MANKOU",     "Génie Mécanique", s1_gl.id),
+            ("MANKOU",     "Physique",        s1_gl.id),
+            ("MABIALA",    "Électricité",     s1_gl.id),
+            ("ZABAKANI",   "TP Programmation",s1_gl.id),
+
+            # ── SEMESTRE 3 — IG ──────────────
+            ("BATANGOUNA", "Algorithmique",    s3_ig.id),
+            ("MAVOUNGOU",  "Systèmes d'info.", s3_ig.id),
+            ("MONGONDZA",  "Gestion de projet",s3_ig.id),
+            ("MONGONDZA",  "Communication",    s3_ig.id),
+            ("EPOUNDA",    "Mathématiques",    s3_ig.id),
+            ("BENAZO",     "Base de données",  s3_ig.id),
+            ("BENAZO",     "Programmation Web",s3_ig.id),
+
+            # ── SEMESTRE 3 — Big Data ────────
+            ("BATANGOUNA", "Algorithmique",    s3_bd.id),
+            ("MALONGA",    "Machine Learning", s3_bd.id),
+            ("MIAKAYIZILA","Data Visualisation",s3_bd.id),
+            ("KENDE",      "Probabilités avancées",s3_bd.id),
+            ("SAH",        "TP Python Data",   s3_bd.id),
+
+            # ── SEMESTRE 3 — Génie Logiciel ──
+            ("BATANGOUNA", "Algorithmique",      s3_gl.id),
+            ("MALONGA",    "Architecture logicielle",s3_gl.id),
+            ("MONGONDZA",  "Gestion de projet",  s3_gl.id),
+            ("GAMPIKA",    "UML avancé",         s3_gl.id),
+            ("GAMPIKA",    "TP Développement",   s3_gl.id),
         ]
 
         affectations = []
-        nb_ok  = 0
-        nb_ko  = 0
+        nb_ok = 0
+        nb_ko = 0
 
-        for nom_ens, nom_mat in affectations_data:
+        for nom_ens, nom_mat, sem_id in (
+            affectations_data
+        ):
             ens = idx_ens.get(nom_ens)
-            mat = idx_mat.get(nom_mat)
+            mat = idx_mat.get((nom_mat, sem_id))
 
             if not ens:
                 print(
-                    f"    Enseignant introuvable "
-                    f": {nom_ens}"
+                    f"   Enseignant introuvable"
+                    f" : {nom_ens}"
                 )
                 nb_ko += 1
                 continue
 
             if not mat:
                 print(
-                    f"    Matière introuvable "
-                    f": {nom_mat}"
+                    f"   Matière introuvable"
+                    f" : {nom_mat} "
+                    f"(sem={sem_id})"
                 )
                 nb_ko += 1
                 continue
 
             affectations.append(
                 EnseignantMatiere(
-                    enseignant_id=ens.id,
-                    matiere_id   =mat.id
+                    enseignant_id = ens.id,
+                    matiere_id    = mat.id,
+                    semestre_id   = sem_id
                 )
             )
             nb_ok += 1
@@ -523,9 +551,8 @@ def inserer_donnees():
         if nb_ko > 0:
             print(
                 f"   {nb_ko} affectations "
-                f"non trouvées"
+                f"ignorées"
             )
-        
 
 
           # ─────────────────────────────────

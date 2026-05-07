@@ -271,8 +271,7 @@ def creation():
 
             try:
                 d = date.fromisoformat(date_str)
-
-                # Créer l'emploi du temps
+# Créer l'emploi du temps
                 edt = creer_et(
                     session      = db,
                     parcours_id  = parcours_id,
@@ -282,13 +281,15 @@ def creation():
                 )
 
                 # Récupérer les matières
-                matieres = db.query(Matiere).filter_by(
+                matieres = db.query(
+                    Matiere
+                ).filter_by(
                     semestre_id=semestre_id
                 ).all()
 
                 if not matieres:
                     flash(
-                        "Aucune matière trouvée pour "
+                        "Aucune matière pour "
                         "ce semestre.",
                         "error"
                     )
@@ -300,21 +301,19 @@ def creation():
                 planning, credits, non_ass = (
                     assigner_matieres(
                         matieres,
-                        date_debut          = d,
+                        date_debut = d,
                         jours_exceptionnels = jours_exc,
-                        heure_debut         = heure_debut
+                        heure_debut = heure_debut
                     )
                 )
 
                 # Sauvegarder les séances
+                # sur l'emploi du temps existant
                 sauvegarder_en_bd(
-                    session      = db,
-                    planning     = planning,
-                    matieres     = matieres,
-                    parcours_id  = parcours_id,
-                    semestre_id  = semestre_id,
-                    type_session = type_session,
-                    date_debut   = d
+                    session  = db,
+                    planning = planning,
+                    matieres = matieres,
+                    edt_id   = edt.id  # ← passe l'id
                 )
 
                 # Assigner les enseignants
